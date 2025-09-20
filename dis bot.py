@@ -155,4 +155,41 @@ async def kick(ctx, member: discord.Member, *, reason: str = "No reason"):
     except Exception as e:
         await ctx.send(f" Error: {str(e)}")
 
+@bot.command()
+@commands.has_any_role("╭───𒌋𒀖 「🜲・ THE FOOL」", "╭───𒌋𒀖 「🜲・THE L O R D 」")
+async def mute(ctx, member: discord.Member, *, reason="No reason"):
+    muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
+
+    # Create Muted role if it doesn’t exist
+    if not muted_role:
+        muted_role = await ctx.guild.create_role(name="Muted")
+        for channel in ctx.guild.channels:
+            await channel.set_permissions(muted_role, send_messages=False, speak=False)
+
+    await member.add_roles(muted_role, reason=reason)
+    await ctx.send(f" {member.mention} was muted. Reason: {reason}")
+
+
+@bot.command()
+@commands.has_any_role("╭───𒌋𒀖 「🜲・ THE FOOL」", "╭───𒌋𒀖 「🜲・THE L O R D 」")
+async def unmute(ctx, member: discord.Member):
+    muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
+    if muted_role in member.roles:
+        await member.remove_roles(muted_role)
+        await ctx.send(f" {member.mention} was unmuted.")
+    else:
+        await ctx.send("⚠ This user is not muted.")
+
+@bot.event
+async def on_member_join(member):
+    try:
+        await member.send(f"👋 Welcome to **Chakravyuh**, {member.name}! Glad to have you here. ⚔️")
+    except:
+        pass  # If DMs are closed
+@bot.event
+async def on_member_join(member):
+    channel = bot.get_channel(1418090278740295813)  # Replace with your welcome channel ID
+    if channel:
+        await channel.send(f"👋 Welcome {member.mention} to **Chakravyuh**! ⚔️\nPrepare yourself for the battlefield...")
+
 bot.run("MTQxODYyMDA2OTA5Njk4MDY1MQ.GB6sdn.1tRvNMuMrUdKcy9csZnWwJ0Lrf1-KlMCdXK6qo")
