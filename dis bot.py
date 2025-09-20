@@ -73,7 +73,7 @@ async def d(ctx, amount: int):
     await ctx.send(f" Deleted {len(deleted)-1} messages.", delete_after=5)
 
 
-# 🔒 Lock channel
+#  Lock channel
 @bot.command()
 @commands.has_permissions(manage_channels=True)
 async def lock(ctx):
@@ -82,7 +82,7 @@ async def lock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
     await ctx.send(f">  {ctx.channel.mention} has been **locked**.")
 
-# 🔓 Unlock channel
+#  Unlock channel
 @bot.command()
 @commands.has_permissions(manage_channels=True)
 async def unlock(ctx):
