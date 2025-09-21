@@ -55,9 +55,9 @@ async def on_message(message):
                                             > !convict = removes role
                                             > !ban = bans user
                                             > !kick = kicks user
+                                            > !create_reactionrole 
+                                            > !mute and !unmute
                                               ''')
-
-
     # Process other commands if you have any
     await bot.process_commands(message)
 
@@ -191,5 +191,77 @@ async def on_member_join(member):
     channel = bot.get_channel(1418090278740295813)  # Replace with your welcome channel ID
     if channel:
         await channel.send(f"👋 Welcome {member.mention} to **Chakravyuh**! ⚔️\nPrepare yourself for the battlefield...")
+@bot.command()
+@commands.has_any_role("╭───𒌋𒀖 「🜲・ THE FOOL」", "╭───𒌋𒀖 「🜲・THE L O R D 」")
+async def create_reactionrole(ctx):
+    def check(m):
+        return m.author == ctx.author and m.channel == ctx.channel
+
+    # Step 1: Ask for header/title
+    await ctx.send("📝 Enter a **title/header** for the Reaction Role message:")
+    msg = await bot.wait_for("message", check=check)
+    header = msg.content
+
+    # Step 2: Ask for description
+    await ctx.send("📝 Enter a **description** (instructions, category, etc.):")
+    msg = await bot.wait_for("message", check=check)
+    description = msg.content
+
+    # Step 3: Ask for emoji + role pairs
+    reaction_roles = {}
+    await ctx.send("🔑 Now enter **emoji + role mention** pairs (one per line). Example:\n"
+                   "`😀 @TestRole`\nType `done` when finished.")
+
+    while True:
+        msg = await bot.wait_for("message", check=check)
+        if msg.content.lower() == "done":
+            break
+
+        try:
+            emoji, role_mention = msg.content.split()
+            role_id = int(role_mention.strip("<@&>"))
+            reaction_roles[emoji] = role_id
+        except Exception:
+            await ctx.send("⚠ Format wrong! Use `emoji @Role`")
+            continue
+
+    # Step 4: Ask for channel
+    await ctx.send("📢 Mention the **channel** where this Reaction Role should appear:")
+    msg = await bot.wait_for("message", check=check)
+    channel_id = int(msg.content.strip("<#>"))
+    channel = bot.get_channel(channel_id)
+
+    # Step 5: Send the embed in that channel
+    embed = discord.Embed(title=header, description=description, color=discord.Color.gold())
+    message = await channel.send(embed=embed)
+
+    # Add reactions
+    for emoji in reaction_roles:
+        await message.add_reaction(emoji)
+
+    # Save mapping
+    bot.reaction_roles = {str(message.id): reaction_roles}
+    await ctx.send("✅ Reaction Role menu created successfully!")
+@bot.event
+async def on_raw_reaction_add(payload):
+    if hasattr(bot, "reaction_roles") and str(payload.message_id) in bot.reaction_roles:
+        emoji_map = bot.reaction_roles[str(payload.message_id)]
+        if str(payload.emoji) in emoji_map:
+            guild = bot.get_guild(payload.guild_id)
+            role = guild.get_role(emoji_map[str(payload.emoji)])
+            member = guild.get_member(payload.user_id)
+            if role and member:
+                await member.add_roles(role)
+
+@bot.event
+async def on_raw_reaction_remove(payload):
+    if hasattr(bot, "reaction_roles") and str(payload.message_id) in bot.reaction_roles:
+        emoji_map = bot.reaction_roles[str(payload.message_id)]
+        if str(payload.emoji) in emoji_map:
+            guild = bot.get_guild(payload.guild_id)
+            role = guild.get_role(emoji_map[str(payload.emoji)])
+            member = guild.get_member(payload.user_id)
+            if role and member:
+                await member.remove_roles(role)
 
 bot.run("MTQxODYyMDA2OTA5Njk4MDY1MQ.GB6sdn.1tRvNMuMrUdKcy9csZnWwJ0Lrf1-KlMCdXK6qo")
