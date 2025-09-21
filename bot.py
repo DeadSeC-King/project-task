@@ -3,6 +3,8 @@ from discord.ext import commands
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+import random
+import asyncio
 
 DISCORD_TOKEN="MTQxODYyMDA2OTA5Njk4MDY1MQ.GB6sdn.1tRvNMuMrUdKcy9csZnWwJ0Lrf1-KlMCdXK6qo"
 
@@ -291,4 +293,69 @@ async def close(ctx):
         await ctx.channel.delete()
     else:
         await ctx.send("❌ This command can only be used inside a ticket channel.")
+
+giveaways = {}  # {message_id: {"prize": str, "entrants": set(), "ended": bool}}
+
+# ----------------- GIVEAWAY BUTTON -----------------
+class GiveawayButton(discord.ui.View):
+    def __init__(self, message_id):
+        super().__init__(timeout=None)
+        self.message_id = message_id
+
+    @discord.ui.button(label="🎉 Join Giveaway", style=discord.ButtonStyle.green, custom_id="join_giveaway")
+    async def join_giveaway(self, interaction: discord.Interaction, button: discord.ui.Button):
+        data = giveaways.get(self.message_id)
+        if not data:
+            return await interaction.response.send_message("❌ Giveaway not found.", ephemeral=True)
+
+        if data["ended"]:
+            return await interaction.response.send_message("⚠️ Giveaway has already ended.", ephemeral=True)
+
+        if interaction.user.id in data["entrants"]:
+            return await interaction.response.send_message("⚠️ You already joined!", ephemeral=True)
+
+        data["entrants"].add(interaction.user.id)
+        await interaction.response.send_message(f"🎉 {interaction.user.mention} joined the giveaway!", ephemeral=True)
+
+# ----------------- START GIVEAWAY -----------------
+@bot.command()
+@commands.has_permissions(manage_messages=True)
+async def giveaway(ctx, channel: discord.TextChannel, duration: int, *, prize: str):
+    """
+    Start a giveaway.
+    Usage: !giveaway #channel 60 Free Nitro
+    (duration in seconds)
+    """
+    embed = discord.Embed(
+        title="🎉 Giveaway! 🎉",
+        description=f"**Prize:** {prize}\n⏰ Duration: {duration} seconds\nClick the button below to join!",
+        color=discord.Color.purple()
+    )
+
+    msg = await channel.send(embed=embed, view=GiveawayButton(message_id=ctx.message.id))
+    giveaways[ctx.message.id] = {"prize": prize, "entrants": set(), "message": msg, "ended": False}
+
+    await ctx.send(f"✅ Giveaway started in {channel.mention} for **{prize}**! Duration: {duration} seconds.")
+
+    # Wait for duration then auto-pick winner
+    await asyncio.sleep(duration)
+    await end_giveaway(ctx.guild, ctx.message.id)
+
+# ----------------- AUTO END FUNCTION -----------------
+async def end_giveaway(guild, message_id):
+    data = giveaways.get(message_id)
+    if not data or data["ended"]:
+        return
+
+    data["ended"] = True
+    prize = data["prize"]
+    entrants = data["entrants"]
+
+    if not entrants:
+        return await data["message"].channel.send(f"❌ No entries for **{prize}**. Giveaway cancelled.")
+
+    winner_id = random.choice(list(entrants))
+    winner = guild.get_member(winner_id)
+    await data["message"].channel.send(f"🎉 Congratulations {winner.mention}! You won **{prize}** 🎁")
+
 bot.run("MTQxODYyMDA2OTA5Njk4MDY1MQ.GB6sdn.1tRvNMuMrUdKcy9csZnWwJ0Lrf1-KlMCdXK6qo")
