@@ -36,26 +36,33 @@ async def an_error(ctx, error):
 # ---------------- MENTION REPLIES ----------------
 @bot.event
 async def on_message(message):
-    if message.author == bot.user:
+    if message.author.bot:  # ignore all bots including itself
         return
 
     if bot.user in message.mentions:
-        msg = str(message.content).lower()
+        msg = message.content.lower()
+        response = None
+
         if "hi" in msg or "hello" in msg:
-            await message.channel.send(f"Hello {message.author.mention}!")
+            response = f"Hello {message.author.mention}!"
         elif "namaste" in msg or "hey" in msg:
-            await message.channel.send(f"Namastey {message.author.mention}!")
+            response = f"Namastey {message.author.mention}!"
         elif "tag" in msg:
-            await message.channel.send("𖹭.ᐟ")
+            response = "𖹭.ᐟ"
         elif "help" in msg:
-            await message.channel.send(f''' > @me tag - to get server member tag 
-> !d num = delete messages num 
-> !lock / !unlock = lock/unlock channel 
-> !bestow / !convict = add/remove role
-> !ban / !kick / !mute / !unmute 
-> !create_reactionrole 
-> !chat message = talk with AI
-            ''')
+            response = (
+                "> @me tag - to get server member tag\n"
+                "> !d num = delete messages num\n"
+                "> !lock / !unlock = lock/unlock channel\n"
+                "> !bestow / !convict = add/remove role\n"
+                "> !ban / !kick / !mute / !unmute\n"
+                "> !create_reactionrole\n"
+                "> !chat message = talk with AI"
+            )
+
+        if response:
+            await message.channel.send(response)
+
     await bot.process_commands(message)
 
 # ---------------- MODERATION ----------------
@@ -228,6 +235,60 @@ async def on_raw_reaction_remove(payload):
                 await member.remove_roles(role)
 
 
+# -----------------------
+# CONFIG - must be defined first
+# -----------------------
+ADMIN_ROLE_ID = 1418090155616501790
+TICKET_CATEGORY = "❍──────LOGS───➤"
+# -----------------------
 
+class TicketButton(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)  # Persistent
 
+    @discord.ui.button(label="Open Ticket", style=discord.ButtonStyle.green, custom_id="open_ticket")
+    async def open_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
+        guild = interaction.guild
+        author = interaction.user
+
+        # Check/create category
+        category = discord.utils.get(guild.categories, name=TICKET_CATEGORY)
+        if category is None:
+            category = await guild.create_category(TICKET_CATEGORY)
+
+        # Check if user already has a ticket
+        existing = discord.utils.get(category.channels, name=f"ticket-{author.name}")
+        if existing:
+            await interaction.response.send_message(f"❌ You already have a ticket: {existing.mention}", ephemeral=True)
+            return
+
+        # Create ticket channel
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+            discord.Object(id=ADMIN_ROLE_ID): discord.PermissionOverwrite(read_messages=True, send_messages=True)
+        }
+
+        channel = await guild.create_text_channel(
+            name=f"ticket-{author.name}",
+            category=category,
+            overwrites=overwrites
+        )
+
+        await channel.send(f"🎫 Hi {author.mention}, please describe your project request here!")
+        await interaction.response.send_message(f"✅ Your ticket has been created: {channel.mention}", ephemeral=True)
+
+# Command to send the ticket panel in the shop channel
+@bot.command()
+async def setup_ticket(ctx):
+    view = TicketButton()
+    await ctx.send("💻 Click the button below to open a project ticket!", view=view)
+
+# Command to close ticket
+@bot.command()
+async def close(ctx):
+    if ctx.channel.category and ctx.channel.category.name == TICKET_CATEGORY:
+        await ctx.channel.delete()
+    else:
+        await ctx.send("❌ This command can only be used inside a ticket channel.")
 bot.run("MTQxODYyMDA2OTA5Njk4MDY1MQ.GB6sdn.1tRvNMuMrUdKcy9csZnWwJ0Lrf1-KlMCdXK6qo")
