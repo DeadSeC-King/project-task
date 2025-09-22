@@ -1,26 +1,18 @@
 import discord
 from discord.ext import commands
-from openai import OpenAI
-from dotenv import load_dotenv
 import os
 import random
 import asyncio
+print("Bot is starting...")
 
-DISCORD_TOKEN="MTQxODYyMDA2OTA5Njk4MDY1MQ.GB6sdn.1tRvNMuMrUdKcy9csZnWwJ0Lrf1-KlMCdXK6qo"
-
-
-
-
-# Setup bot
+# ---------------- BOT SETUP ----------------
 intents = discord.Intents.all()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user}")
-
-
+    print(f" Logged in as {bot.user}")
 
 
 # ---------------- ANNOUNCE ----------------
@@ -35,13 +27,15 @@ async def an_error(ctx, error):
     if isinstance(error, commands.MissingAnyRole):
         await ctx.send("❌ You do not have the required role to use this command.")
 
+
 # ---------------- MENTION REPLIES ----------------
 @bot.event
-async def on_message(message):
-    if message.author.bot:  # ignore all bots including itself
+async def on_message(message: discord.Message):
+    #print(f"[DEBUG] on_message fired: {message.content}")
+    if message.author.bot:
         return
 
-    if bot.user in message.mentions:
+    if bot.user.mentioned_in(message):
         msg = message.content.lower()
         response = None
 
@@ -67,15 +61,18 @@ async def on_message(message):
 
     await bot.process_commands(message)
 
+
 # ---------------- MODERATION ----------------
 @bot.command()
 @commands.has_permissions(manage_messages=True)
 async def d(ctx, amount: int):
+    #print(f"[DEBUG] d command executed by {ctx.author}")
     if amount < 1:
-        await ctx.send("⚠ Please provide a number greater than 0.")
-        return
+        return await ctx.send("⚠ Please provide a number greater than 0.")
+
     deleted = await ctx.channel.purge(limit=amount+1)
     await ctx.send(f"🗑 Deleted {len(deleted)-1} messages.", delete_after=5)
+
 
 @bot.command()
 @commands.has_permissions(manage_channels=True)
@@ -85,6 +82,7 @@ async def lock(ctx):
     await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
     await ctx.send(f"🔒 {ctx.channel.mention} locked.")
 
+
 @bot.command()
 @commands.has_permissions(manage_channels=True)
 async def unlock(ctx):
@@ -92,6 +90,7 @@ async def unlock(ctx):
     overwrite.send_messages = True
     await ctx.channel.set_permissions(ctx.guild.default_role, overwrite=overwrite)
     await ctx.send(f"🔓 {ctx.channel.mention} unlocked.")
+
 
 def find_role(guild, role_arg):
     role = None
@@ -104,31 +103,32 @@ def find_role(guild, role_arg):
         role = discord.utils.get(guild.roles, name=role_arg)
     return role
 
+
 @bot.command()
 @commands.has_permissions(manage_roles=True)
 async def bestow(ctx, member: discord.Member, *, role_arg: str):
     role = find_role(ctx.guild, role_arg)
     if role is None:
-        await ctx.send(f"⚠ Role `{role_arg}` not found.")
-        return
+        return await ctx.send(f"⚠ Role `{role_arg}` not found.")
     try:
         await member.add_roles(role)
         await ctx.send(f"✅ Added role **{role.name}** to {member.mention}")
     except discord.Forbidden:
         await ctx.send("❌ No permission to add that role.")
 
+
 @bot.command()
 @commands.has_permissions(manage_roles=True)
 async def convict(ctx, member: discord.Member, *, role_arg: str):
     role = find_role(ctx.guild, role_arg)
     if role is None:
-        await ctx.send(f"⚠ Role `{role_arg}` not found.")
-        return
+        return await ctx.send(f"⚠ Role `{role_arg}` not found.")
     try:
         await member.remove_roles(role)
         await ctx.send(f"✅ Removed role **{role.name}** from {member.mention}")
     except discord.Forbidden:
         await ctx.send("❌ No permission to remove that role.")
+
 
 @bot.command()
 @commands.has_any_role("╭───𒌋𒀖 「🜲・ THE FOOL」", "╭───𒌋𒀖 「🜲・THE L O R D 」")
@@ -139,6 +139,7 @@ async def ban(ctx, member: discord.Member, *, reason="No reason"):
     except Exception as e:
         await ctx.send(f"⚠ Error: {e}")
 
+
 @bot.command()
 @commands.has_any_role("╭───𒌋𒀖 「🜲・ THE FOOL」", "╭───𒌋𒀖 「🜲・THE L O R D 」")
 async def kick(ctx, member: discord.Member, *, reason="No reason"):
@@ -147,6 +148,7 @@ async def kick(ctx, member: discord.Member, *, reason="No reason"):
         await ctx.send(f"👢 {member.mention} was kicked. Reason: {reason}")
     except Exception as e:
         await ctx.send(f"⚠ Error: {e}")
+
 
 @bot.command()
 @commands.has_any_role("╭───𒌋𒀖 「🜲・ THE FOOL」", "╭───𒌋𒀖 「🜲・THE L O R D 」")
@@ -159,6 +161,7 @@ async def mute(ctx, member: discord.Member, *, reason="No reason"):
     await member.add_roles(muted_role, reason=reason)
     await ctx.send(f"🔇 {member.mention} muted. Reason: {reason}")
 
+
 @bot.command()
 @commands.has_any_role("╭───𒌋𒀖 「🜲・ THE FOOL」", "╭───𒌋𒀖 「🜲・THE L O R D 」")
 async def unmute(ctx, member: discord.Member):
@@ -169,12 +172,14 @@ async def unmute(ctx, member: discord.Member):
     else:
         await ctx.send("⚠ This user is not muted.")
 
+
 # ---------------- WELCOME ----------------
 @bot.event
 async def on_member_join(member):
-    channel = bot.get_channel(1418090278740295813)  # replace with your welcome channel ID
+    channel = bot.get_channel(1418090278740295813)  # replace with your channel ID
     if channel:
         await channel.send(f"👋 Welcome {member.mention} to **Chakravyuh**! ⚔️")
+
 
 # ---------------- REACTION ROLES ----------------
 @bot.command()
@@ -214,6 +219,7 @@ async def create_reactionrole(ctx):
     bot.reaction_roles = {str(message.id): reaction_roles}
     await ctx.send("✅ Reaction Role menu created!")
 
+
 @bot.event
 async def on_raw_reaction_add(payload):
     if hasattr(bot, "reaction_roles") and str(payload.message_id) in bot.reaction_roles:
@@ -224,6 +230,7 @@ async def on_raw_reaction_add(payload):
             member = guild.get_member(payload.user_id)
             if role and member:
                 await member.add_roles(role)
+
 
 @bot.event
 async def on_raw_reaction_remove(payload):
@@ -237,34 +244,27 @@ async def on_raw_reaction_remove(payload):
                 await member.remove_roles(role)
 
 
-# -----------------------
-# CONFIG - must be defined first
-# -----------------------
+# ---------------- TICKETS ----------------
 ADMIN_ROLE_ID = 1418090155616501790
 TICKET_CATEGORY = "❍──────LOGS───➤"
-# -----------------------
 
 class TicketButton(discord.ui.View):
     def __init__(self):
-        super().__init__(timeout=None)  # Persistent
+        super().__init__(timeout=None)
 
     @discord.ui.button(label="Open Ticket", style=discord.ButtonStyle.green, custom_id="open_ticket")
     async def open_ticket(self, interaction: discord.Interaction, button: discord.ui.Button):
         guild = interaction.guild
         author = interaction.user
 
-        # Check/create category
         category = discord.utils.get(guild.categories, name=TICKET_CATEGORY)
         if category is None:
             category = await guild.create_category(TICKET_CATEGORY)
 
-        # Check if user already has a ticket
         existing = discord.utils.get(category.channels, name=f"ticket-{author.name}")
         if existing:
-            await interaction.response.send_message(f"❌ You already have a ticket: {existing.mention}", ephemeral=True)
-            return
+            return await interaction.response.send_message(f"❌ You already have a ticket: {existing.mention}", ephemeral=True)
 
-        # Create ticket channel
         overwrites = {
             guild.default_role: discord.PermissionOverwrite(read_messages=False),
             author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
@@ -280,13 +280,13 @@ class TicketButton(discord.ui.View):
         await channel.send(f"🎫 Hi {author.mention}, please describe your project request here!")
         await interaction.response.send_message(f"✅ Your ticket has been created: {channel.mention}", ephemeral=True)
 
-# Command to send the ticket panel in the shop channel
+
 @bot.command()
 async def setup_ticket(ctx):
     view = TicketButton()
     await ctx.send("💻 Click the button below to open a project ticket!", view=view)
 
-# Command to close ticket
+
 @bot.command()
 async def close(ctx):
     if ctx.channel.category and ctx.channel.category.name == TICKET_CATEGORY:
@@ -294,9 +294,10 @@ async def close(ctx):
     else:
         await ctx.send("❌ This command can only be used inside a ticket channel.")
 
-giveaways = {}  # {message_id: {"prize": str, "entrants": set(), "ended": bool}}
 
-# ----------------- GIVEAWAY BUTTON -----------------
+# ---------------- GIVEAWAYS ----------------
+giveaways = {}  # {message_id: {"prize": str, "entrants": set(), "ended": bool, "message": msg}}
+
 class GiveawayButton(discord.ui.View):
     def __init__(self, message_id):
         super().__init__(timeout=None)
@@ -317,7 +318,7 @@ class GiveawayButton(discord.ui.View):
         data["entrants"].add(interaction.user.id)
         await interaction.response.send_message(f"🎉 {interaction.user.mention} joined the giveaway!", ephemeral=True)
 
-# ----------------- START GIVEAWAY -----------------
+
 @bot.command()
 @commands.has_permissions(manage_messages=True)
 async def giveaway(ctx, channel: discord.TextChannel, duration: int, *, prize: str):
@@ -332,16 +333,18 @@ async def giveaway(ctx, channel: discord.TextChannel, duration: int, *, prize: s
         color=discord.Color.purple()
     )
 
-    msg = await channel.send(embed=embed, view=GiveawayButton(message_id=ctx.message.id))
-    giveaways[ctx.message.id] = {"prize": prize, "entrants": set(), "message": msg, "ended": False}
+    msg = await channel.send(embed=embed)
+    view = GiveawayButton(message_id=msg.id)
+    await msg.edit(view=view)
+
+    giveaways[msg.id] = {"prize": prize, "entrants": set(), "message": msg, "ended": False}
 
     await ctx.send(f"✅ Giveaway started in {channel.mention} for **{prize}**! Duration: {duration} seconds.")
 
-    # Wait for duration then auto-pick winner
     await asyncio.sleep(duration)
-    await end_giveaway(ctx.guild, ctx.message.id)
+    await end_giveaway(ctx.guild, msg.id)
 
-# ----------------- AUTO END FUNCTION -----------------
+
 async def end_giveaway(guild, message_id):
     data = giveaways.get(message_id)
     if not data or data["ended"]:
@@ -359,3 +362,4 @@ async def end_giveaway(guild, message_id):
     await data["message"].channel.send(f"🎉 Congratulations {winner.mention}! You won **{prize}** 🎁")
 
 bot.run("MTQxODYyMDA2OTA5Njk4MDY1MQ.GB6sdn.1tRvNMuMrUdKcy9csZnWwJ0Lrf1-KlMCdXK6qo")
+
