@@ -45,6 +45,10 @@ async def on_message(message: discord.Message):
             response = f"Namastey {message.author.mention}!"
         elif "tag" in msg:
             response = "𖹭.ᐟ"
+        elif "shardul" in msg:
+            response = "gay hai wo londa"
+        elif "who is shardul" in msg:
+            response = "gay hai wo londa"
         elif "help" in msg:
             response = (
                 "> @me tag - to get server member tag\n"
@@ -53,7 +57,6 @@ async def on_message(message: discord.Message):
                 "> !bestow / !convict = add/remove role\n"
                 "> !ban / !kick / !mute / !unmute\n"
                 "> !create_reactionrole\n"
-                "> !chat message = talk with AI"
             )
 
         if response:
