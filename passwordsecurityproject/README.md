@@ -13,3 +13,4 @@ This project implements a password security system written in C. It focuses on s
 ## Technologies Used
 - Programming Language: C
 - Standard Libraries: `<stdio.h>`, `<stdlib.h>`, `<string.h>`, `<ctype.h>`
+- User-defined Libraries: '<admin.h>','<brute.h>','<strength.h>','<generator.h>'
