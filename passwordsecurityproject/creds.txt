@@ -1,3 +1,17 @@
 halo 1234
 king king1234
 queen 1234
+alice   alpha123
+bob     beta456
+charlie gamma789
+dave    delta@123
+eve     omega!321
+frank   123456
+grace   password
+heidi   h3!d!2024
+ivan    qwerty
+judy    judy@2025
+krran   Secure#007
+root    superadmin123
+guest   guest123
+
