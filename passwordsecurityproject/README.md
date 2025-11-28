@@ -7,7 +7,6 @@ This project implements a password security system written in C. It focuses on s
 - Secure password input and validation
 - Simple credential storage (e.g., text file)
 - Basic user authentication by matching username and password
-- Prevents storing passwords in plain text (using hashing or other methods can be added)
 - Demonstrates fundamental password security principles in C
 
 ## Technologies Used
