@@ -13,3 +13,13 @@ This project implements a password security system written in C. It focuses on s
 - Programming Language: C
 - Standard Libraries: `<stdio.h>`, `<stdlib.h>`, `<string.h>`, `<ctype.h>`
 - User-defined Libraries: '<admin.h>','<brute.h>','<strength.h>','<generator.h>'
+
+# Hashcat Integration
+# --------------------
+# This project integrates Hashcat to demonstrate password weakness.
+# Steps:
+# 1. Generate SHA-256 hash using Python.
+# 2. Export hash to hashes.txt.
+# 3. Run Hashcat using:
+#       hashcat -m 1400 hashes.txt wordlist.txt --force
+# This educates users on why simple hashing is not secure.
