@@ -71,3 +71,51 @@ void bpc() {
     fclose(file);
 }
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+void show_banner() {
+    printf("=============================================\n");
+    printf("        HASH SECURITY DEMO (MOCK MODE)       \n");
+    printf("        Hashcat Integration Showcase         \n");
+    printf("=============================================\n\n");
+}
+
+int main() {
+    show_banner();
+
+    printf("[+] Initializing Hashcat engine...\n");
+    printf("[+] Hashcat version: 6.2.x (simulated)\n");
+    printf("[+] Status: READY\n\n");
+
+    char hash_file[100] = "sample_hashes.txt";
+    printf("[+] Loading hash file: %s\n", hash_file);
+
+    char attack_mode[50] = "Brute-force (Mock)";
+    printf("[+] Selected Attack Mode: %s\n", attack_mode);
+
+    char wordlist[100] = "wordlist.txt";
+    printf("[+] Using Wordlist: %s (simulation only)\n\n", wordlist);
+
+    printf("[+] Starting Hashcat...\n");
+    printf("[+] Cracking in progress...\n");
+  
+
+    // Fake delay
+    for (int i = 0; i < 3; i++) {
+        printf(".");
+        fflush(stdout);
+        #ifdef _WIN32
+            Sleep(500);
+        #else
+            usleep(500000);
+        #endif
+    }
+    printf("\n\n");
+
+
+    printf("[+] Exiting Hashcat demo.\n");
+    printf("=============================================\n");
+    return 0;
+}
