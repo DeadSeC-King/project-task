@@ -11,12 +11,12 @@
 // Allowed characters for brute forcing
 const char charset[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-// Recursive brute force function to generate passwords and compare
+// Recursive brute force function to geenrate passwords and compare
 bool brute_force(char *guess, int pos, int max_len, const char *target) {
     if (pos == max_len) {
         guess[pos] = '\0';
         if (strcmp(guess, target) == 0) {
-            return true;  // Found the password
+            return true;
         }
         return false;
     }
